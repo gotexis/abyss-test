@@ -88,6 +88,6 @@ def count_areas(pic):
             colors[next_unmarked.color] = 1
 
     return {
-        "total_sectors": sector + 1,
+        "total_sectors": sector,
         "colors": colors
     }

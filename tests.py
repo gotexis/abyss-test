@@ -16,7 +16,7 @@ class TestCases(unittest.TestCase):
             [0, 0, 0, 0, 20, 20, 0],
         ]
         result = count_areas(pic)
-        self.assertDictEqual(result, {'total_sectors': 4, 'colors': {0: 1, 1: 1, 20: 1}})
+        self.assertDictEqual(result, {'total_sectors': 3, 'colors': {0: 1, 1: 1, 20: 1}})
 
     def test_2(self):
         pic = [
@@ -29,7 +29,7 @@ class TestCases(unittest.TestCase):
             [0, 0, 0, 0, 20, 20, 0],
         ]
         result = count_areas(pic)
-        self.assertDictEqual(result, {'total_sectors': 6, 'colors': {0: 2, 1: 1, 2: 1, 20: 1}})
+        self.assertDictEqual(result, {'total_sectors': 5, 'colors': {0: 2, 1: 1, 2: 1, 20: 1}})
 
 
 if __name__ == '__main__':
