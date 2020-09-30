@@ -1,93 +1,79 @@
-from dataclasses import dataclass
+import argparse
 
 
-@dataclass
-class Pixel:
-    x: int
-    y: int
-    color: int
-    sector: int = None
+def find_next_unmarked(sector_grid):
+    for y, row in enumerate(sector_grid):
+        for x, col in enumerate(row):
+            if col == 0:
+                return x, y
 
 
-def find_next_unmarked(grid):
-    for row in grid:
-        for j in row:
-            if j.sector is None:
-                return j
+def valid_coordinates(x, y, grid):
+    if x < 0 or y < 0:
+        return False
+    try:
+        looc = grid[y][x]
+        return True
+    except IndexError:
+        return False
 
 
-# the main function
-def count_areas(pic):
-    # get boundary of pic
-    max_y = len(pic) - 1
-    max_x = len(pic[0]) - 1
+def count_areas(grid):
+    sectored = [[0 for i in row] for row in grid]
+    # start sector counter at 1
+    stats = {}
+    sector = 1
 
-    # convert to Pixel grid
-    # & make a flat list of Pixels
-    pic_flat = []
-    pic_grid = [
-        [
-            Pixel(y=y, x=x, color=color) for x, color in enumerate(line)
-        ] for y, line in enumerate(pic)
-    ]
-    for a in pic_grid:
-        for b in a:
-            pic_flat.append(b)
+    while find_next_unmarked(sectored):
+        stack = []
+        x_start, y_start = find_next_unmarked(sectored)
 
-    # define the mark function locally
-    # arguably can refactor this into a class method
-    def mark(pixel: Pixel, color: int, sector: int):
-        # don't do anything if already marked
-        if pixel.sector is not None:
-            return
+        color = grid[y_start][x_start]
 
-        if color != pixel.color:
-            return
-        # mark sector if same color
-        if color == pixel.color:
-            pixel.sector = sector
-        x = pixel.x
-        y = pixel.y
-
-        surroundings = []
-        # mark surroundings
-        if x < max_x:
-            surroundings.append(pic_grid[y][x + 1])
-        if x > 0:
-            surroundings.append(pic_grid[y][x - 1])
-        if y > 0:
-            surroundings.append(pic_grid[y - 1][x])
-        if y < max_y:
-            surroundings.append(pic_grid[y + 1][x])
-
-        for p in surroundings:
-            try:
-                mark(p, color, sector)
-            except IndexError:
-                # out of range
-                ...
-
-    # statistics init
-    sector = 0
-    colors = {}
-
-    # loop until all is marked
-    while True:
-        next_pixel = find_next_unmarked(pic_grid)
-        if not next_pixel:
-            break
-        next_unmarked = find_next_unmarked(pic_grid)
-        mark(next_unmarked, next_unmarked.color, sector)
-
-        # next sector
-        sector += 1
-        # record count
-        if colors.get(next_unmarked.color):
-            colors[next_unmarked.color] += 1
+        # update stats
+        if stats.get(color):
+            stats[color] += 1
         else:
-            colors[next_unmarked.color] = 1
+            stats[color] = 1
 
-    return {
-        "total_sectors": sector,
-        "colors": colors
-    }
+        stack.append([x_start, y_start])
+
+        while len(stack) > 0:
+            x, y = stack.pop()
+
+            if not valid_coordinates(x, y, grid):
+                continue
+            if grid[y][x] != color:
+                continue
+            if sectored[y][x] != 0:
+                continue
+            sectored[y][x] = sector
+
+            stack.append([x + 1, y])
+            stack.append([x - 1, y])
+            stack.append([x, y + 1])
+            stack.append([x, y - 1])
+
+        sector += 1
+
+    return stats
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=argparse.FileType('rb'))
+
+    def list_str_int(values):
+        return list(map(int, values.split(',')))
+
+    parser.add_argument('--size', type=list_str_int)
+    args = parser.parse_args()
+
+    # get args
+    byte_string = args.file.read()
+    size = args.size
+    width = size[0]
+    list_1d = list(byte_string)
+    list_2d = list(zip(*[iter(list_1d)] * width))
+
+    print(count_areas(list_2d))
